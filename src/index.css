@@ -1,0 +1,306 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Midflite C", sans-serif;
+  --font-sans: "Geist", system-ui, -apple-system, sans-serif;
+
+  --color-bg-primary: #000000;
+  --color-bg-secondary: #0a0a0a;
+  --color-bg-card: #111111;
+  --color-text-primary: #ffffff;
+  --color-text-muted: #acacac;
+  --color-border-subtle: rgba(255, 255, 255, 0.15);
+  --color-border-strong: rgba(255, 255, 255, 0.3);
+  --radius-case-pill: 999px;
+  --radius-case-control: 50%;
+  --radius-case-panel: 16px;
+  --color-case-overlay: rgba(0, 0, 0, 0.7);
+  --shadow-case-panel: 0 24px 100px rgba(0, 0, 0, 0.5);
+  --cursor-glow-size: 76px;
+  --radius-cursor-glow: 50%;
+  --color-cursor-glow-core: rgb(255 255 255 / 0.24);
+  --color-cursor-glow-mid: rgb(255 255 255 / 0.08);
+  --color-cursor-glow-edge: rgb(255 255 255 / 0);
+  --cursor-default: url('/cursor-arrow.svg') 3 3, auto;
+  --cursor-link: url('/cursor-link.svg') 3 3, pointer;
+  --color-portal-base: rgb(var(--portal-base-rgb));
+  --color-portal-shade: rgb(8 8 8 / 0.5);
+  --color-topo-base: rgb(var(--topo-base-rgb));
+  --color-topo-shade: rgb(8 8 8 / 0.65);
+  --color-silk-shade: rgb(0 0 0 / 0.25);
+  --color-particles: rgb(225 225 225);
+}
+
+:root {
+  --hero-word-tracking: 0.012;
+  --hero-stem-bend: 9px;
+  --hero-stem-clearance: 64px;
+  --hero-stem-stagger: 0.16;
+  --hero-stem-stiffness: 115;
+  --hero-stem-damping: 16;
+  --hero-reveal-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --particles-opacity: 0.55;
+  --particles-speed: 1;
+  --particles-scroll-boost: 2;
+  --particles-scroll-return: 0.3;
+  --particles-size: 1.3;
+  --silk-color-rgb: 180 180 180;
+  --silk-opacity: 0.22;
+  --silk-speed: 0.14;
+  --silk-scale: 0.9;
+  --silk-rotation: -0.2;
+  --silk-noise: 0.25;
+  --topo-base-rgb: 8 8 8;
+  --topo-line-rgb: 190 190 190;
+  --topo-line-strength: 0.14;
+  --topo-speed: 0.28;
+  --topo-blur-near: 1px;
+  --topo-blur-edge: 3px;
+  --portal-base-rgb: 8 8 8;
+  --portal-core-rgb: 255 255 255;
+  --portal-fringe-rgb: 190 190 190;
+  --portal-line-strength: 0.22;
+  --portal-speed: 0.22;
+  --portal-size: 0.85;
+}
+
+.portfolio-shell { isolation: isolate; background: var(--color-bg-primary); }
+.portfolio-shell > main, .portfolio-shell > footer { position: relative; z-index: 1; }
+.particle-field { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+.particle-field canvas { display: block; width: 100%; height: 100%; }
+.silk-field { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+.silk-field canvas { display: block; width: 100%; height: 100%; opacity: 0; }
+.silk-field canvas[data-ready="true"] { opacity: 1; }
+.silk-field-shade { position: absolute; inset: 0; background: radial-gradient(ellipse at center, var(--color-silk-shade), transparent 75%); }
+.topo-field { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; background: var(--color-topo-base); }
+.topo-field canvas { display: block; width: 100%; height: 100%; opacity: 0; }
+.topo-field canvas[data-ready="true"] { opacity: 1; }
+.topo-field-shade { position: absolute; inset: 0; background: radial-gradient(ellipse at center, var(--color-topo-shade), transparent 75%), linear-gradient(var(--color-topo-shade), transparent 25%, transparent 75%, var(--color-topo-shade)); }
+/* Fade two blur levels in toward the edges, leaving the centre in focus. */
+.topo-field-shade::before,
+.topo-field-shade::after { content: ''; position: absolute; inset: 0; pointer-events: none; }
+.topo-field-shade::before {
+  -webkit-backdrop-filter: blur(var(--topo-blur-near));
+  backdrop-filter: blur(var(--topo-blur-near));
+  -webkit-mask-image: radial-gradient(ellipse at center, transparent 20%, var(--color-text-primary) 65%);
+  mask-image: radial-gradient(ellipse at center, transparent 20%, var(--color-text-primary) 65%);
+}
+.topo-field-shade::after {
+  -webkit-backdrop-filter: blur(var(--topo-blur-edge));
+  backdrop-filter: blur(var(--topo-blur-edge));
+  -webkit-mask-image: radial-gradient(ellipse at center, transparent 55%, var(--color-text-primary) 100%);
+  mask-image: radial-gradient(ellipse at center, transparent 55%, var(--color-text-primary) 100%);
+}
+.portal-field { position: fixed; inset: 0; z-index: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 60%, var(--color-bg-card), var(--color-portal-base) 70%); }
+.portal-field canvas { display: block; width: 100%; height: 100%; opacity: 0; }
+.portal-field canvas[data-ready="true"] { opacity: 1; }
+.portal-field-shade { position: absolute; inset: 0; background: radial-gradient(ellipse at center, var(--color-portal-shade), transparent 75%), linear-gradient(var(--color-portal-shade), transparent 25%, transparent 75%, var(--color-portal-shade)); }
+
+@media (hover: hover) and (pointer: fine) and (forced-colors: none) {
+  body { cursor: var(--cursor-default); }
+  a, button, [role="button"], .cursor-pointer {
+    cursor: var(--cursor-link) !important;
+  }
+  /* Keep task-specific feedback for image zoom and carousel dragging. */
+  .case-image-tile { cursor: zoom-in !important; }
+  .cursor-grab { cursor: grab !important; }
+  .cursor-grab:active { cursor: grabbing !important; }
+  input, textarea, [contenteditable="true"] { cursor: text !important; }
+  :disabled { cursor: not-allowed !important; }
+}
+
+.cursor-glow {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: var(--cursor-glow-size);
+  height: var(--cursor-glow-size);
+  border-radius: var(--radius-cursor-glow);
+  background: radial-gradient(circle, var(--color-cursor-glow-core) 0%, var(--color-cursor-glow-mid) 30%, var(--color-cursor-glow-edge) 70%);
+  pointer-events: none;
+  z-index: 999;
+}
+
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .cursor-glow { display: block; }
+}
+
+@font-face {
+  font-family: "Midflite C";
+  src: url("./assets/fonts/midflite-c/midflite-c.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Geist";
+  src: url("./assets/fonts/midflite-c/GeistVariableVF.ttf") format("truetype-variations"),
+       url("./assets/fonts/midflite-c/Geist-Regular.otf") format("opentype");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html,
+  body,
+  #root {
+    width: 100%;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    background-color: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    font-family: var(--font-sans);
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  ::selection {
+    background-color: #ffffff;
+    color: #000000;
+  }
+}
+
+.outline-text {
+  position: relative;
+  display: inline-block;
+  isolation: isolate;
+}
+
+.outline-text-fill,
+.outline-text-stroke {
+  transition: opacity var(--outline-duration, 200ms) ease-in-out;
+  will-change: opacity;
+}
+
+.outline-text-stroke {
+  position: absolute;
+  inset: 0;
+  color: transparent;
+  -webkit-text-stroke: var(--outline-width, 1px) var(--color-text-primary);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.outline-text[data-outlined="true"] > .outline-text-fill,
+.outline-text-trigger:is(:hover, :focus-visible) .outline-text-fill {
+  opacity: 0;
+}
+
+.outline-text[data-outlined="true"] > .outline-text-stroke,
+.outline-text-trigger:is(:hover, :focus-visible) .outline-text-stroke {
+  opacity: 1;
+}
+
+.hero-phrase {
+  font-size: var(--hero-phrase-size, 8vw);
+}
+
+.hero-rotating-word { letter-spacing: calc(var(--hero-word-tracking) * 1em); }
+.hero-mark { display: block; height: 0.667em; width: auto; overflow: visible; color: var(--color-text-primary); }
+.hero-mark-letters { opacity: 0; }
+.hero-mark[data-ready="true"] .hero-mark-letters { animation: hero-mark-reveal 600ms var(--hero-reveal-ease) both; }
+.hero-word-counter { display: inline-flex; font-variant-numeric: tabular-nums; letter-spacing: 0.08em; }
+.hero-word-counter > span:first-child { display: inline-block; width: 2ch; }
+.hero-counter-total { opacity: 0.55; white-space: pre; }
+@keyframes hero-mark-reveal { from { opacity: 0; } to { opacity: 1; } }
+
+.hero-outline-text {
+  --outline-width: 1.8px;
+  --outline-duration: 400ms;
+}
+
+@media (min-width: 640px) {
+  .hero-outline-text { --outline-width: 2px; }
+}
+
+@media (min-width: 768px) {
+  .hero-outline-text { --outline-width: 2.4px; }
+}
+
+/* Restart the incoming fade even when returning to the previous photograph. */
+.bio-photo[data-active="true"][data-transition="true"] {
+  animation: bio-photo-reveal 800ms ease-in-out;
+}
+
+@keyframes bio-photo-reveal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Keep glyph paint stable: only each link's own layers crossfade. */
+.contact-link-label {
+  position: relative;
+  isolation: isolate;
+}
+
+.contact-link-fill,
+.contact-link-outline {
+  transition: opacity 250ms ease;
+  will-change: opacity;
+}
+
+.contact-link-outline {
+  position: absolute;
+  inset: 0;
+  color: transparent;
+  -webkit-text-stroke: 2px var(--color-text-primary);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.contact-link:is(:hover, :focus-visible) .contact-link-fill {
+  opacity: 0;
+}
+
+.contact-link:is(:hover, :focus-visible) .contact-link-outline {
+  opacity: 1;
+}
+
+@media (min-width: 768px) {
+  .contact-link-outline {
+    -webkit-text-stroke-width: 3px;
+  }
+}
+
+.scroll-hint-arrow {
+  opacity: 0.6;
+}
+
+.scroll-hint-arrow[data-ready="true"] {
+  animation: scroll-hint-nudge 3.2s ease-in-out 1.6s infinite;
+}
+
+@keyframes scroll-hint-nudge {
+  0%, 65%, 100% { transform: translateY(0); opacity: 0.6; }
+  30% { transform: translateY(3px); opacity: 0.85; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-mark[data-ready="true"] .hero-mark-letters { animation: none; opacity: 1; }
+  .scroll-hint-arrow {
+    animation: none !important;
+  }
+  .bio-photo {
+    animation: none !important;
+  }
+  .outline-text-fill,
+  .outline-text-stroke,
+  .contact-link-fill,
+  .contact-link-outline,
+  .contact-link-arrow {
+    transition: none;
+  }
+}
