@@ -83,7 +83,7 @@ export const AboutSection = () => {
               marginBottom: 'clamp(24px, 2.5vw, 44px)',
             }}
           >
-            Егор — Graphic & Digital Designer
+            Егор — Web & Graphic Designer
           </h2>
 
           {/* Body paragraphs: clamp(18px, 1.3vw, 24px), leading 1.55, color #d4d4d8, mb 24px */}
