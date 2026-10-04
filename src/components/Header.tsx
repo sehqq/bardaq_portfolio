@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { Menu, X } from 'lucide-react';
 import logo from '../assets/images/bq.png';
 import { OutlineText } from './ui/outline-text';
@@ -24,6 +24,12 @@ export const Header = ({ isLoaded }: HeaderProps) => {
   const [scrolled, setScrolled] = useState(false);
   const [fallbackReady, setFallbackReady] = useState(false);
   const isReady = isLoaded ?? fallbackReady;
+  const reducedMotion = useReducedMotion();
+  const pendingScroll = useRef<number | null>(null);
+
+  const scrollPageTo = (top: number) => {
+    window.scrollTo({ top, behavior: reducedMotion ? 'instant' : 'smooth' });
+  };
 
   useEffect(() => {
     if (isLoaded !== undefined) return;
@@ -45,11 +51,18 @@ export const Header = ({ isLoaded }: HeaderProps) => {
   }, []);
 
   const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     e.preventDefault();
     setMobileMenuOpen(false);
     const target = document.querySelector(href);
     if (target) {
-      target.scrollIntoView({ behavior: 'smooth' });
+      // Measure only the fixed header bar, not the open dropdown. Mobile
+      // scrolling waits until its focused link has finished unmounting.
+      const headerBar = e.currentTarget.closest('header')?.firstElementChild;
+      const headerHeight = headerBar?.getBoundingClientRect().height ?? 0;
+      const top = Math.max(0, target.getBoundingClientRect().top + window.scrollY - headerHeight);
+      if (mobileMenuOpen) pendingScroll.current = top;
+      else scrollPageTo(top);
     }
   };
 
@@ -99,18 +112,28 @@ export const Header = ({ isLoaded }: HeaderProps) => {
         {/* Mobile Hamburger Button */}
         <button
           type="button"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          onClick={() => {
+            pendingScroll.current = null;
+            setMobileMenuOpen(!mobileMenuOpen);
+          }}
           className="md:hidden p-2 text-white/80 hover:text-white focus:outline-none cursor-pointer"
           aria-label={mobileMenuOpen ? 'Закрыть меню' : 'Открыть меню'}
+          aria-expanded={mobileMenuOpen}
+          aria-controls="mobile-navigation"
         >
           {mobileMenuOpen ? <X size={26} /> : <Menu size={26} />}
         </button>
       </div>
 
       {/* Mobile Dropdown Menu */}
-      <AnimatePresence>
+      <AnimatePresence onExitComplete={() => {
+        const top = pendingScroll.current;
+        pendingScroll.current = null;
+        if (top !== null) requestAnimationFrame(() => scrollPageTo(top));
+      }}>
         {mobileMenuOpen && (
           <motion.nav
+            id="mobile-navigation"
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
