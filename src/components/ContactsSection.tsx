@@ -50,7 +50,7 @@ export const ContactsSection = () => {
           <div
             key={rowIdx}
             className="flex flex-wrap items-baseline gap-x-[1.2vw]"
-            style={{ lineHeight: 0.86 }}
+            style={{ lineHeight: 'var(--contact-leading)' }}
           >
             {row.map((link) => (
               <a
@@ -60,8 +60,8 @@ export const ContactsSection = () => {
                 rel="noopener noreferrer"
                 className="contact-link group relative inline-flex items-center gap-1.5 sm:gap-2.5 lg:gap-3 font-display leading-[0.86] text-white cursor-pointer whitespace-nowrap"
                 style={{
-                  fontSize: 'clamp(76px, 10.8vw, 215px)',
-                  lineHeight: 0.86,
+                  fontSize: 'var(--contact-font-size)',
+                  lineHeight: 'var(--contact-leading)',
                 }}
               >
                 <span className="contact-link-label">

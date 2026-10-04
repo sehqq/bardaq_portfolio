@@ -4,6 +4,7 @@ import { AnimatePresence, motion, useAnimationControls, useReducedMotion } from 
 import { ArrowLeft, ArrowRight, X } from 'lucide-react';
 import type { CaseItem } from '../data/cases';
 import { casePresentations, type CaseGalleryImage } from '../data/case-galleries';
+import { caseStories } from '../data/case-stories';
 import './case-detail.css';
 
 interface CaseDetailModalProps { caseItem: CaseItem | null; onClose: () => void; }
@@ -65,7 +66,7 @@ const ViewerImage = ({ image }: { image: CaseGalleryImage }) => {
   const [loaded, setLoaded] = useState(false);
   return <>
     <img className="case-viewer-preview" src={image.src.replace('.png', '-preview.webp')} alt="" aria-hidden="true" style={image.crop} />
-    <img className="case-viewer-original" src={image.src} alt={image.alt} style={image.crop} data-loaded={loaded} onLoad={() => setLoaded(true)} />
+    <img className="case-viewer-original" src={image.src.replace('.png', '-full.webp')} alt={image.alt} style={image.crop} decoding="async" data-loaded={loaded} onLoad={() => setLoaded(true)} />
   </>;
 };
 
@@ -119,6 +120,17 @@ const CaseDialog = ({ caseItem, onClose }: { caseItem: CaseItem; onClose: () => 
   const { dialogRef, controls, closing, reducedMotion, requestClose, handleCancel, handleClose } = useAnimatedDialog(onClose, true);
   const [imageIndex, setImageIndex] = useState<number | null>(null);
   const presentation = casePresentations[caseItem.id];
+  const story = caseStories[caseItem.id];
+  const renderImage = (image: CaseGalleryImage, index: number) => (
+    <motion.button key={image.src} type="button" className="case-image-tile"
+      initial={{ opacity: reducedMotion ? 1 : 0, y: reducedMotion ? 0 : 6 }} animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: reducedMotion ? 0 : 0.18, ease: 'easeOut' }}
+      style={{ aspectRatio: image.aspectRatio }} onClick={() => { if (!closing) setImageIndex(index); }}
+      aria-label={`Увеличить: ${image.alt}`} data-figma-node={image.nodeId}>
+      <img src={image.src.replace('.png', '-preview.webp')} alt={image.alt} style={image.crop}
+        loading={index < 2 ? 'eager' : 'lazy'} decoding="async" />
+    </motion.button>
+  );
   return (
     <dialog ref={dialogRef} className="case-dialog" data-closing={closing} aria-labelledby={`case-title-${caseItem.id}`} onClose={handleClose} onCancel={handleCancel} data-case-id={caseItem.id}
       onClick={(event) => { if (event.target === event.currentTarget) void requestClose(); }}>
@@ -131,22 +143,20 @@ const CaseDialog = ({ caseItem, onClose }: { caseItem: CaseItem; onClose: () => 
             </header>
             <div className="case-heading-row">
               <h2 id={`case-title-${caseItem.id}`}>{presentation.title}</h2>
-              {presentation.description && presentation.layout !== 'magazine' && <p className="case-description">{presentation.description}</p>}
             </div>
-            <div className="case-content">
+            <section className="case-feature" aria-label="О проекте">
+              <p className="case-description">{story.context}</p>
+              <dl className="case-project-facts">
+                <div><dt>Моя роль</dt><dd>{story.role}</dd></div>
+                <div><dt>Материалы</dt><dd>{story.materials}</dd></div>
+              </dl>
+            </section>
+            <section className="case-reading-section" aria-labelledby={`case-decisions-${caseItem.id}`}>
+              <h3 className="case-section-label" id={`case-decisions-${caseItem.id}`}>Дизайнерские решения</h3>
               <div className="case-gallery" aria-label={`Изображения кейса ${caseItem.title}`}>
-                {presentation.images.map((image, index) => (
-                  <motion.button key={image.src} type="button" className={`case-image-tile${image.featured ? ' case-image-tile--featured' : ''}`}
-                    initial={{ opacity: reducedMotion ? 1 : 0, y: reducedMotion ? 0 : 6 }} animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: reducedMotion ? 0 : 0.18, delay: reducedMotion ? 0 : Math.min(index * 0.02, 0.1), ease: 'easeOut' }}
-                    style={{ aspectRatio: image.aspectRatio }} onClick={() => { if (!closing) setImageIndex(index); }}
-                    aria-label={`Увеличить: ${image.alt}`} data-figma-node={image.nodeId}>
-                    <img src={image.src.replace('.png', '-preview.webp')} alt={image.alt} style={image.crop} loading={index < 5 ? 'eager' : 'lazy'} decoding="async" />
-                  </motion.button>
-                ))}
+                {presentation.images.map(renderImage)}
               </div>
-              {presentation.layout === 'magazine' && <p className="case-description">{presentation.description}</p>}
-            </div>
+            </section>
           </article>
         </div>
       </motion.div>

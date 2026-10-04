@@ -23,15 +23,6 @@ const CASE_SLIDES: CoverflowSlide[] = [
     subtitle: 'Brandbook',
     meta: [
       { label: 'Год', value: '2026' },
-      {
-        label: 'Роль',
-        value: (
-          <span className="flex flex-col text-right">
-            <span>Графический дизайнер,</span>
-            <span className="whitespace-nowrap">бренд-дизайнер</span>
-          </span>
-        ),
-      },
       { label: 'Инструменты', value: 'Figma · Illustrator · Photoshop' },
     ],
     id: '404-concept',
@@ -44,15 +35,6 @@ const CASE_SLIDES: CoverflowSlide[] = [
     subtitle: 'Brandbook',
     meta: [
       { label: 'Год', value: '2025' },
-      {
-        label: 'Роль',
-        value: (
-          <span className="flex flex-col text-right">
-            <span>Графический дизайнер,</span>
-            <span className="whitespace-nowrap">бренд-дизайнер</span>
-          </span>
-        ),
-      },
       { label: 'Инструменты', value: 'Illustrator · Photoshop' },
     ],
     id: 'pixult',
@@ -65,7 +47,6 @@ const CASE_SLIDES: CoverflowSlide[] = [
     subtitle: 'Полиграфия',
     meta: [
       { label: 'Год', value: '2026' },
-      { label: 'Роль', value: 'Графический дизайнер' },
       { label: 'Инструменты', value: 'Illustrator · Photoshop' },
     ],
     id: 'stud-vibe-1',
@@ -78,7 +59,6 @@ const CASE_SLIDES: CoverflowSlide[] = [
     subtitle: 'Полиграфия',
     meta: [
       { label: 'Год', value: '2026' },
-      { label: 'Роль', value: 'Графический дизайнер' },
       { label: 'Инструменты', value: 'Illustrator · Photoshop' },
     ],
     id: 'stud-vibe-2',
@@ -90,7 +70,6 @@ const CASE_SLIDES: CoverflowSlide[] = [
     subtitle: 'Сборник',
     meta: [
       { label: 'Год', value: '2025–2026' },
-      { label: 'Роль', value: 'Графический дизайнер' },
       { label: 'Инструменты', value: 'Figma · Illustrator · Photoshop' },
     ],
     id: 'posters',
@@ -102,7 +81,6 @@ const CASE_SLIDES: CoverflowSlide[] = [
     subtitle: 'Сборник',
     meta: [
       { label: 'Год', value: '2025–2026' },
-      { label: 'Роль', value: 'Графический дизайнер' },
       { label: 'Инструменты', value: 'Figma · Illustrator · Photoshop' },
     ],
     id: 'logos',
@@ -158,7 +136,7 @@ export const CasesCarousel: React.FC<CasesCarouselProps> = ({ onSelectCase, isCa
         </div>
 
         {/* Centered Headline with zero top margin starting on the exact same horizontal top line as badge */}
-        <h2 className="font-display text-3xl sm:text-5xl lg:text-6xl xl:text-7xl leading-[1.08] text-white tracking-tight mx-auto max-w-4xl text-center m-0 p-0">
+        <h2 className="cases-section-heading font-display text-3xl sm:text-5xl lg:text-6xl xl:text-7xl text-white tracking-tight mx-auto max-w-4xl text-center m-0 p-0">
           От идей и пикселей <br />
           до рабочих проектов
         </h2>

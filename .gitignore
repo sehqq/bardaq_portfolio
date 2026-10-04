@@ -12,6 +12,16 @@ dist
 dist-ssr
 *.local
 
+# Local credentials and audit artifacts must not enter the public repository.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.npm-security-cache/
+.codex/
+outputs/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

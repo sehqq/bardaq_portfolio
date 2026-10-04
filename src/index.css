@@ -9,6 +9,7 @@
   --color-bg-card: #111111;
   --color-text-primary: #ffffff;
   --color-text-muted: #acacac;
+  --color-bio-body: #d4d4d8;
   --color-border-subtle: rgba(255, 255, 255, 0.15);
   --color-border-strong: rgba(255, 255, 255, 0.3);
   --radius-case-pill: 999px;
@@ -32,12 +33,19 @@
 }
 
 :root {
+  --cases-heading-leading: 1.2;
+  --case-title-size: clamp(40px, 11.5cqw, 144px);
+  --case-body-size: clamp(15px, 1.65cqw, 18px);
+  --case-label-size: 12px;
   --hero-word-tracking: 0.012;
-  --hero-stem-bend: 9px;
-  --hero-stem-clearance: 64px;
-  --hero-stem-stagger: 0.16;
-  --hero-stem-stiffness: 115;
-  --hero-stem-damping: 16;
+  --hero-line-edge-opacity: 0.18;
+  --hero-line-middle-opacity: 0.72;
+  --hero-outline-radius: 112px;
+  --hero-outline-width: 1.25px;
+  --color-hero-mask-visible: #ffffff;
+  --color-hero-mask-hidden: #000000;
+  --hero-line-duration: 900ms;
+  --hero-line-delay: 250ms;
   --hero-reveal-ease: cubic-bezier(0.16, 1, 0.3, 1);
   --particles-opacity: 0.55;
   --particles-speed: 1;
@@ -63,6 +71,8 @@
   --portal-speed: 0.22;
   --portal-size: 0.85;
 }
+
+.cases-section-heading { line-height: var(--cases-heading-leading); }
 
 .portfolio-shell { isolation: isolate; background: var(--color-bg-primary); }
 .portfolio-shell > main, .portfolio-shell > footer { position: relative; z-index: 1; }
@@ -205,17 +215,60 @@
 }
 
 .hero-phrase {
+  --hero-stacked: 1;
+  --hero-line-edge-opacity: 0;
+  --hero-mobile-word-ratio: 0.68;
+  --hero-mobile-line-gap: clamp(48px, 7svh, 64px);
+  --tw-translate-y: -4rem;
   font-size: var(--hero-phrase-size, 8vw);
+}
+
+.hero-phrase-layout {
+  flex-direction: column;
+  align-items: center;
+  gap: var(--hero-mobile-line-gap);
+}
+
+.hero-phrase .hero-word-slot {
+  width: 100%;
+  flex: none;
+  padding-left: 0;
+  justify-content: center;
+  font-size: var(--hero-mobile-word-size);
+  min-height: 1em;
+}
+
+@media (min-width: 768px) {
+  .hero-phrase { --hero-stacked: 0; --hero-line-edge-opacity: 0.18; --tw-translate-y: -2.5rem; }
+  .hero-phrase-layout { flex-direction: row; align-items: baseline; gap: 0; }
+  .hero-phrase .hero-word-slot {
+    width: auto;
+    flex: 1;
+    padding-left: 2rem;
+    justify-content: center;
+    font-size: inherit;
+    min-height: 0;
+  }
 }
 
 .hero-rotating-word { letter-spacing: calc(var(--hero-word-tracking) * 1em); }
 .hero-mark { display: block; height: 0.667em; width: auto; overflow: visible; color: var(--color-text-primary); }
 .hero-mark-letters { opacity: 0; }
 .hero-mark[data-ready="true"] .hero-mark-letters { animation: hero-mark-reveal 600ms var(--hero-reveal-ease) both; }
-.hero-word-counter { display: inline-flex; font-variant-numeric: tabular-nums; letter-spacing: 0.08em; }
-.hero-word-counter > span:first-child { display: inline-block; width: 2ch; }
-.hero-counter-total { opacity: 0.55; white-space: pre; }
+.hero-mark-outline { stroke-width: var(--hero-outline-width); pointer-events: none; }
+.hero-mask-base { fill: var(--color-hero-mask-visible); }
+.hero-mask-visible { stop-color: var(--color-hero-mask-visible); }
+.hero-mask-hidden { stop-color: var(--color-hero-mask-hidden); }
+.hero-line-edge, .hero-line-middle, .hero-line-core { stop-color: var(--color-text-primary); }
+.hero-line-edge { stop-opacity: var(--hero-line-edge-opacity); }
+.hero-line-middle { stop-opacity: var(--hero-line-middle-opacity); }
+.hero-line-core { stop-opacity: 1; }
+.hero-guide { transform-box: fill-box; transform: scaleY(0); }
+.hero-guide-up { transform-origin: center bottom; }
+.hero-guide-down { transform-origin: center top; }
+.hero-mark[data-ready="true"] .hero-guide { animation: hero-guide-grow var(--hero-line-duration) var(--hero-reveal-ease) var(--hero-line-delay) both; }
 @keyframes hero-mark-reveal { from { opacity: 0; } to { opacity: 1; } }
+@keyframes hero-guide-grow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
 
 .hero-outline-text {
   --outline-width: 1.8px;
@@ -241,6 +294,12 @@
 }
 
 /* Keep glyph paint stable: only each link's own layers crossfade. */
+#contacts { --contact-leading: 1.02; --contact-font-size: clamp(60px, 20vw, 76px); }
+
+@media (min-width: 768px) {
+  #contacts { --contact-leading: 0.86; --contact-font-size: clamp(76px, 10.8vw, 215px); }
+}
+
 .contact-link-label {
   position: relative;
   isolation: isolate;
@@ -290,6 +349,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .hero-mark[data-ready="true"] .hero-mark-letters { animation: none; opacity: 1; }
+  .hero-mark[data-ready="true"] .hero-guide { animation: none; transform: none; }
   .scroll-hint-arrow {
     animation: none !important;
   }

@@ -22,20 +22,14 @@ interface HeaderProps {
 export const Header = ({ isLoaded }: HeaderProps) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [isReady, setIsReady] = useState(Boolean(isLoaded));
-
-  // Sync readiness strictly with loader completion
-  useEffect(() => {
-    if (isLoaded) {
-      setIsReady(true);
-    }
-  }, [isLoaded]);
+  const [fallbackReady, setFallbackReady] = useState(false);
+  const isReady = isLoaded ?? fallbackReady;
 
   useEffect(() => {
     if (isLoaded !== undefined) return;
-    const handleLoadingComplete = () => setIsReady(true);
+    const handleLoadingComplete = () => setFallbackReady(true);
     window.addEventListener('loadingComplete', handleLoadingComplete);
-    const timer = setTimeout(() => setIsReady(true), 500);
+    const timer = setTimeout(() => setFallbackReady(true), 500);
     return () => {
       window.removeEventListener('loadingComplete', handleLoadingComplete);
       clearTimeout(timer);

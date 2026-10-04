@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { AnimatePresence } from 'motion/react';
 import { CustomCursor } from './components/CustomCursor';
 import { LoadingScreen } from './components/LoadingScreen';
@@ -14,6 +14,9 @@ import ParticleField from './components/ui/particle-field';
 function App() {
   const [loading, setLoading] = useState(true);
   const [selectedCase, setSelectedCase] = useState<CaseItem | null>(null);
+  const completeLoading = useCallback(() => {
+    setLoading(false);
+  }, []);
 
   return (
     <div className="portfolio-shell w-full min-h-screen m-0 p-0 overflow-x-hidden text-white relative selection:bg-white selection:text-black">
@@ -23,7 +26,7 @@ function App() {
 
       {/* Initial Loading Entrance Screen */}
       <AnimatePresence>
-        {loading && <LoadingScreen onComplete={() => setLoading(false)} />}
+        {loading && <LoadingScreen onComplete={completeLoading} />}
       </AnimatePresence>
 
       {/* Fixed Glassmorphic Navigation Header */}

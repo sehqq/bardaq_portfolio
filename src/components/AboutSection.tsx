@@ -83,7 +83,7 @@ export const AboutSection = () => {
               marginBottom: 'clamp(24px, 2.5vw, 44px)',
             }}
           >
-            Егор — Brand & Digital Designer
+            Егор — Graphic & Digital Designer
           </h2>
 
           {/* Body paragraphs: clamp(18px, 1.3vw, 24px), leading 1.55, color #d4d4d8, mb 24px */}
@@ -92,7 +92,7 @@ export const AboutSection = () => {
               style={{
                 fontSize: 'clamp(18px, 1.3vw, 24px)',
                 lineHeight: 1.55,
-                color: '#d4d4d8',
+                color: 'var(--color-bio-body)',
                 fontWeight: 400,
                 marginBottom: '24px',
               }}
@@ -103,18 +103,18 @@ export const AboutSection = () => {
               style={{
                 fontSize: 'clamp(18px, 1.3vw, 24px)',
                 lineHeight: 1.55,
-                color: '#d4d4d8',
+                color: 'var(--color-bio-body)',
                 fontWeight: 400,
                 marginBottom: '24px',
               }}
             >
-              Разрабатываю айдентику, сайты и визуальные системы, усиливая графический дизайн кодом и генеративным ИИ. Технологии помогают мне выходить за рамки статичных макетов: создавать генеративную графику, анимировать визуал, генерировать медиа и собирать интерактивные веб-решения.
+              Разрабатываю айдентику и визуальные системы, создаю сайты и приложения, работаю с анимацией и интерактивностью. Для реализации проектов использую код и генеративный ИИ.
             </p>
             <p
               style={{
                 fontSize: 'clamp(18px, 1.3vw, 24px)',
                 lineHeight: 1.55,
-                color: '#d4d4d8',
+                color: 'var(--color-bio-body)',
                 fontWeight: 400,
                 marginBottom: '0px',
               }}

@@ -1,6 +1,6 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 
-// Original contours with extended stems separated; small optical spacing corrections.
+// Original letter contours; extensions are joined into these same paths below.
 const glyphs = [
   { offset: 6, path: 'M686.249 408.063C699.499 408.063 710.812 403.375 720.187 394C729.562 384.625 734.249 373.313 734.249 360.063C734.249 346.813 729.562 335.5 720.187 326.125C710.812 316.75 699.499 312.063 686.249 312.063C672.999 312.063 661.687 316.75 652.312 326.125C642.937 335.5 638.249 346.813 638.249 360.063C638.249 373.313 642.937 384.625 652.312 394C661.687 403.375 672.999 408.063 686.249 408.063ZM622.312 455.969V296.032H638.249V317.688C639.124 316.688 640.062 315.719 641.062 314.781C653.562 302.282 668.624 296.032 686.249 296.032C703.937 296.032 719.03 302.282 731.53 314.781C744.03 327.281 750.28 342.375 750.28 360.063C750.28 377.688 744.03 392.75 731.53 405.25C719.03 417.75 703.937 424 686.249 424C668.624 424 653.562 417.75 641.062 405.25C640.062 404.313 639.124 403.344 638.249 402.344V455.969H622.312Z' },
   { offset: 5, path: 'M547.124 408.063C560.374 408.063 571.687 403.375 581.062 394C590.437 384.625 595.124 373.313 595.124 360.063C595.124 346.813 590.437 335.501 581.062 326.126C571.687 316.751 560.374 312.063 547.124 312.063C533.874 312.063 522.562 316.751 513.187 326.126C503.812 335.501 499.124 346.813 499.124 360.063C499.124 373.313 503.812 384.625 513.187 394C522.562 403.375 533.874 408.063 547.124 408.063ZM547.124 424C529.499 424 514.437 417.75 501.937 405.25C489.437 392.75 483.187 377.688 483.187 360.063C483.187 342.376 489.437 327.282 501.937 314.782C514.437 302.282 529.499 296.032 547.124 296.032C564.812 296.032 579.905 302.282 592.405 314.782C604.905 327.282 611.155 342.376 611.155 360.063C611.155 377.688 604.905 392.75 592.405 405.25C579.905 417.75 564.812 424 547.124 424Z' },
@@ -11,190 +11,196 @@ const glyphs = [
   { offset: 0, path: 'M0 424V240H15.9375V376C29.1875 376 40.4999 371.313 49.8749 361.938C59.2499 352.563 63.9374 341.251 63.9374 328.001V240H79.9686V328.001C79.9686 345.688 73.7187 360.782 61.2187 373.282C54.6562 379.844 47.4062 384.688 39.4687 387.813L79.9686 408.063V424L15.9375 392.032V424H0Z' },
  ];
 
-interface StemSpring { value: number; velocity: number }
-
-// Integrate at small fixed steps so the spring keeps the same character at
-// different refresh rates and after a slow frame.
-const advanceSpring = (spring: StemSpring, target: number, dt: number, stiffness: number, damping: number) => {
-  const steps = Math.max(1, Math.ceil(dt * 120));
-  const step = dt / steps;
-  for (let i = 0; i < steps; i++) {
-    spring.velocity += ((target - spring.value) * stiffness - spring.velocity * damping) * step;
-    spring.value += spring.velocity * step;
-  }
-  if (Math.abs(target - spring.value) < 0.0005 && Math.abs(spring.velocity) < 0.001) {
-    spring.value = target;
-    spring.velocity = 0;
-  }
-};
-
 export const HeroMark = ({ ready }: { ready: boolean }) => {
   const svgRef = useRef<SVGSVGElement>(null);
-  const enteredRef = useRef(false);
-
+  const fillSpotRef = useRef<SVGCircleElement>(null);
+  const outlineSpotRef = useRef<SVGCircleElement>(null);
+  const id = useId().replace(/:/g, '');
+  const [bounds, setBounds] = useState({ top: -500, bottom: 1300 });
   useEffect(() => {
     const svg = svgRef.current;
     const section = svg?.closest('section');
     if (!svg || !section) return;
-    const upperPath = svg.querySelector<SVGPathElement>('[data-stem="upper"]');
-    const lowerPath = svg.querySelector<SVGPathElement>('[data-stem="lower"]');
-    if (!upperPath || !lowerPath) return;
+    const measure = () => {
+      const mark = svg.getBoundingClientRect();
+      const hero = section.getBoundingClientRect();
+      const scale = mark.height / 128;
+      if (!scale) return;
+      const phrase = svg.closest('.hero-phrase');
+      const stacked = phrase && getComputedStyle(phrase).getPropertyValue('--hero-stacked').trim() === '1';
+      const word = phrase?.querySelector('.hero-word-slot')?.getBoundingClientRect();
+      // Mobile stems end within the composition rather than at viewport edges.
+      const upperEdge = stacked ? mark.top - Math.min(96, Math.max(64, hero.height * 0.1)) : hero.top;
+      const top = 296 + (upperEdge - mark.top) / scale;
+      const lowerEdge = stacked && word ? word.top - 24 : hero.bottom;
+      const bottom = Math.max(488, 296 + (lowerEdge - mark.top) / scale);
+      setBounds(previous => Math.abs(previous.top - top) < 0.1 && Math.abs(previous.bottom - bottom) < 0.1
+        ? previous : { top, bottom });
+    };
+    const observer = new ResizeObserver(measure);
+    observer.observe(svg);
+    observer.observe(section);
+    return () => observer.disconnect();
+  }, []);
 
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+  useEffect(() => {
+    const svg = svgRef.current;
+    const section = svg?.closest('section');
+    const fillSpot = fillSpotRef.current;
+    const outlineSpot = outlineSpotRef.current;
+    if (!svg || !section || !fillSpot || !outlineSpot) return;
+
     const pointer = window.matchMedia('(hover: hover) and (pointer: fine)');
-    const tokens = getComputedStyle(svg);
-    const bendLimit = parseFloat(tokens.getPropertyValue('--hero-stem-bend')) || 9;
-    const clearance = parseFloat(tokens.getPropertyValue('--hero-stem-clearance')) || 64;
-    const stagger = parseFloat(tokens.getPropertyValue('--hero-stem-stagger')) || 0.16;
-    const stiffness = Number(tokens.getPropertyValue('--hero-stem-stiffness')) || 115;
-    const damping = Number(tokens.getPropertyValue('--hero-stem-damping')) || 16;
-    const animateEntrance = ready && !enteredRef.current && !reduced.matches && pointer.matches;
-    if (ready) enteredRef.current = true;
-
-    const extension = [0, 1].map(() => ({ value: animateEntrance ? 0 : 1, velocity: 0 }));
-    const bend = [0, 1].map(() => ({ value: 0, velocity: 0 }));
-    const targets = [0, 0];
-    const lengths = [0, 0];
-    const geometry = { left: 0, top: 0, scale: 1 };
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const current = { x: 0, y: 360, amount: 0 };
+    const target = { ...current };
+    let radius = 0;
     let frame = 0;
     let last = 0;
-    let elapsed = 0;
-    let inView = true;
-    let pointerPosition: { x: number; y: number } | null = null;
 
     const paint = () => {
-      const upLength = lengths[0] * extension[0].value;
-      const downLength = lengths[1] * extension[1].value;
-      const upBend = bend[0].value / geometry.scale;
-      const downBend = bend[1].value / geometry.scale;
-      const upperEnd = 296.032 - upLength;
-      const lowerEnd = 455.969 + downLength;
-
-      // Extend both edges of the stem inside its original outline. Cubic
-      // tangents remain vertical at the attachment and keep the width constant.
-      upperPath.setAttribute('d', glyphs[0].path.replace('V296.032H638.249V317.688',
-        `V296.032C622.312 ${296.032 - upLength * 0.32} ${622.312 + upBend} ${upperEnd + upLength * 0.32} ${622.312 + upBend} ${upperEnd}` +
-        `H${638.249 + upBend}C${638.249 + upBend} ${upperEnd + upLength * 0.32} 638.249 ${296.032 - upLength * 0.32} 638.249 296.032V317.688`));
-      lowerPath.setAttribute('d', glyphs[5].path.replace('V455.969H91.1249Z',
-        `V455.969C107.062 ${455.969 + downLength * 0.32} ${107.062 + downBend} ${lowerEnd - downLength * 0.32} ${107.062 + downBend} ${lowerEnd}` +
-        `H${91.1249 + downBend}C${91.1249 + downBend} ${lowerEnd - downLength * 0.32} 91.1249 ${455.969 + downLength * 0.32} 91.1249 455.969Z`));
-    };
-
-    const updateTargets = () => {
-      const interactive = ready && pointer.matches && !reduced.matches && inView && pointerPosition;
-      for (let i = 0; i < 2; i++) {
-        targets[i] = 0;
-        if (!interactive || !pointerPosition) continue;
-        const x = geometry.left + (i === 0 ? 642.2805 : 100.0935) * geometry.scale;
-        const anchor = i === 0 ? 296.032 : 455.969;
-        const y = geometry.top + (anchor + (i === 0 ? -1 : 1) * lengths[i] * 0.5) * geometry.scale;
-        const dx = pointerPosition.x - x;
-        const horizontal = Math.max(0, 1 - Math.abs(dx) / 300);
-        const vertical = Math.max(0, 1 - Math.abs(pointerPosition.y - y) / Math.max(120, lengths[i] * geometry.scale * 0.8));
-        targets[i] = bendLimit * Math.max(-1, Math.min(1, dx / 70)) * horizontal * vertical;
+      for (const spot of [fillSpot, outlineSpot]) {
+        spot.setAttribute('cx', String(current.x));
+        spot.setAttribute('cy', String(current.y));
+        spot.setAttribute('r', String(radius * (0.65 + current.amount * 0.35)));
+        spot.setAttribute('opacity', String(current.amount));
       }
-    };
-
-    const schedule = () => {
-      if (!frame && inView && !document.hidden) frame = requestAnimationFrame(tick);
     };
     const tick = (now: number) => {
       frame = 0;
       const dt = last ? Math.min((now - last) / 1000, 0.05) : 1 / 60;
       last = now;
-      elapsed += dt;
-      let moving = false;
-      for (let i = 0; i < 2; i++) {
-        const target = elapsed >= stagger * (i + 1) ? 1 : 0;
-        if (animateEntrance) {
-          advanceSpring(extension[i], target, dt, stiffness, damping);
-          moving ||= target === 0 || extension[i].value !== 1;
-        }
-        advanceSpring(bend[i], targets[i], dt, 140, 24);
-        moving ||= bend[i].value !== targets[i];
-      }
+      const positionEase = reduced.matches ? 1 : 1 - Math.exp(-dt / 0.055);
+      const revealEase = reduced.matches ? 1 : 1 - Math.exp(-dt / 0.12);
+      current.x += (target.x - current.x) * positionEase;
+      current.y += (target.y - current.y) * positionEase;
+      current.amount += (target.amount - current.amount) * revealEase;
+      const settled = Math.abs(current.x - target.x) < 0.05 && Math.abs(current.y - target.y) < 0.05
+        && Math.abs(current.amount - target.amount) < 0.001;
+      if (settled) Object.assign(current, target);
       paint();
-      if (moving) schedule();
+      if (!settled) frame = requestAnimationFrame(tick);
       else last = 0;
     };
-
-    const measure = () => {
-      const mark = svg.getBoundingClientRect();
-      const hero = section.getBoundingClientRect();
-      geometry.scale = mark.height / 128 || 1;
-      geometry.left = mark.left;
-      geometry.top = mark.top - 296 * geometry.scale;
-      const headerHeight = document.querySelector('header')?.getBoundingClientRect().height || 0;
-      lengths[0] = Math.max(0, (mark.top - hero.top - headerHeight - clearance) / geometry.scale);
-      lengths[1] = Math.max(0, (hero.bottom - clearance - (geometry.top + 455.969 * geometry.scale)) / geometry.scale);
-      updateTargets();
-      paint();
-      schedule();
+    const schedule = () => {
+      if (!frame && !document.hidden) frame = requestAnimationFrame(tick);
     };
+    const leave = () => { target.amount = 0; schedule(); };
     const move = (event: PointerEvent) => {
-      if (event.pointerType !== 'mouse' || !pointer.matches || reduced.matches) return;
-      pointerPosition = { x: event.clientX, y: event.clientY };
-      updateTargets();
+      if (!ready || !pointer.matches || event.pointerType !== 'mouse') return;
+      const box = svg.getBoundingClientRect();
+      const scale = box.height / 128;
+      if (!scale) return;
+      const x = (event.clientX - box.left) / scale;
+      const y = 296 + (event.clientY - box.top) / scale;
+      const hero = section.getBoundingClientRect();
+      if (x < 0 || x > 757 || event.clientY < hero.top || event.clientY > hero.bottom) { leave(); return; }
+      const radiusPx = parseFloat(getComputedStyle(svg).getPropertyValue('--hero-outline-radius'));
+      radius = Math.min(Number.isFinite(radiusPx) ? radiusPx : box.height * 0.95, box.height * 0.95) / scale;
+      // Start at the pointer rather than sweeping in from the previous hover.
+      if (current.amount === 0) { current.x = x; current.y = y; }
+      target.x = x;
+      target.y = y;
+      target.amount = 1;
       schedule();
     };
-    const leave = () => { pointerPosition = null; updateTargets(); schedule(); };
-    const syncPreference = () => {
-      if (reduced.matches || !pointer.matches) {
-        elapsed = Math.max(elapsed, stagger * 2);
-        for (const spring of extension) { spring.value = 1; spring.velocity = 0; }
-        for (const spring of bend) { spring.value = 0; spring.velocity = 0; }
-      }
-      leave();
-      paint();
-    };
-    const visibility = () => {
+    const reset = () => {
       cancelAnimationFrame(frame);
       frame = 0;
       last = 0;
-      if (!document.hidden) { measure(); schedule(); }
+      target.amount = current.amount = 0;
+      paint();
     };
-    const resize = new ResizeObserver(measure);
-    resize.observe(svg);
-    resize.observe(section);
-    const intersection = new IntersectionObserver(([entry]) => {
-      inView = entry.isIntersecting;
-      if (!inView) {
-        cancelAnimationFrame(frame);
-        frame = 0;
-        last = 0;
-        elapsed = Math.max(elapsed, stagger * 2);
-        for (const spring of extension) { spring.value = 1; spring.velocity = 0; }
-        leave();
-      } else measure();
-    });
-    intersection.observe(section);
     section.addEventListener('pointermove', move, { passive: true });
     section.addEventListener('pointerleave', leave);
-    window.addEventListener('scroll', measure, { passive: true });
-    document.addEventListener('visibilitychange', visibility);
-    reduced.addEventListener('change', syncPreference);
-    pointer.addEventListener('change', syncPreference);
+    window.addEventListener('scroll', leave, { passive: true });
+    window.addEventListener('resize', reset);
+    pointer.addEventListener('change', reset);
+    reduced.addEventListener('change', reset);
+    document.addEventListener('visibilitychange', reset);
     return () => {
       cancelAnimationFrame(frame);
-      resize.disconnect();
-      intersection.disconnect();
       section.removeEventListener('pointermove', move);
       section.removeEventListener('pointerleave', leave);
-      window.removeEventListener('scroll', measure);
-      document.removeEventListener('visibilitychange', visibility);
-      reduced.removeEventListener('change', syncPreference);
-      pointer.removeEventListener('change', syncPreference);
+      window.removeEventListener('scroll', leave);
+      window.removeEventListener('resize', reset);
+      pointer.removeEventListener('change', reset);
+      reduced.removeEventListener('change', reset);
+      document.removeEventListener('visibilitychange', reset);
     };
   }, [ready]);
-
+  const upperLines = [{ x: 0, width: 15.9375, end: 240 }, { x: 628.312, width: 15.937, end: 296.032 }];
+  const lowerLines = [{ x: 92.1249, width: 15.9371, start: 455.969 }, { x: 456.624, width: 16.032, start: 424 }];
+  // Change the outer contour itself, so no stroke crosses an internal join.
+  const extendedGlyphs = glyphs.map((glyph, index) => {
+    let path = glyph.path;
+    if (index === 0) path = path.replace('V296.032H638.249V317.688', `V${bounds.top}H638.249V317.688`);
+    if (index === 2) path = path.replaceAll('424', String(bounds.bottom));
+    if (index === 5) path = path.replace('M91.1249 455.969', `M91.1249 ${bounds.bottom}`)
+      .replace('V455.969H91.1249Z', `V${bounds.bottom}H91.1249Z`);
+    if (index === 6) path = path.replace('V240', `V${bounds.top}`);
+    return { ...glyph, path };
+  });
+  const maskTop = Math.min(bounds.top, 208) - 32;
+  const maskBottom = Math.max(bounds.bottom, 488) + 32;
+  const gradientOffset = (y: number) => Math.max(0, Math.min(1, (y - bounds.top) / (bounds.bottom - bounds.top)));
   return (
     <svg ref={svgRef} viewBox="0 296 757 128" fill="currentColor" xmlns="http://www.w3.org/2000/svg"
       className="hero-mark" role="img" aria-label="Креатор" shapeRendering="geometricPrecision" data-ready={ready}>
-      <g className="hero-mark-letters">
-        {glyphs.map((glyph, index) => <path key={index} d={glyph.path} transform={`translate(${glyph.offset} 0)`}
-          data-stem={index === 0 ? 'upper' : index === 5 ? 'lower' : undefined} />)}
+      <defs>
+        <radialGradient id={`${id}-erase`}>
+          <stop offset="0.18" className="hero-mask-hidden" stopOpacity="1" />
+          <stop offset="0.5" className="hero-mask-hidden" stopOpacity="0.92" />
+          <stop offset="0.78" className="hero-mask-hidden" stopOpacity="0.35" />
+          <stop offset="1" className="hero-mask-hidden" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id={`${id}-outline`}>
+          <stop offset="0.18" className="hero-mask-visible" stopOpacity="1" />
+          <stop offset="0.5" className="hero-mask-visible" stopOpacity="0.92" />
+          <stop offset="0.78" className="hero-mask-visible" stopOpacity="0.35" />
+          <stop offset="1" className="hero-mask-visible" stopOpacity="0" />
+        </radialGradient>
+        <mask id={`${id}-fill-mask`} maskUnits="userSpaceOnUse" x="-32" y={maskTop} width="821" height={maskBottom - maskTop} style={{ maskType: 'luminance' }}>
+          <rect x="-32" y={maskTop} width="821" height={maskBottom - maskTop} className="hero-mask-base" />
+          <circle ref={fillSpotRef} r="0" opacity="0" fill={`url(#${id}-erase)`} />
+        </mask>
+        <mask id={`${id}-outline-mask`} maskUnits="userSpaceOnUse" x="-32" y={maskTop} width="821" height={maskBottom - maskTop} style={{ maskType: 'alpha' }}>
+          <circle ref={outlineSpotRef} r="0" opacity="0" fill={`url(#${id}-outline)`} />
+        </mask>
+        {upperLines.map((line, index) => (
+          <linearGradient key={index} id={`${id}-up-${index}`} gradientUnits="userSpaceOnUse" x1="0" x2="0" y1={bounds.top} y2={bounds.bottom}>
+            <stop offset="0" className="hero-line-edge" />
+            <stop offset={gradientOffset(bounds.top + (line.end - bounds.top) * 0.55)} className="hero-line-middle" />
+            <stop offset={gradientOffset(line.end)} className="hero-line-core" /><stop offset="1" className="hero-line-core" />
+          </linearGradient>
+        ))}
+        {lowerLines.map((line, index) => (
+          <linearGradient key={index} id={`${id}-down-${index}`} gradientUnits="userSpaceOnUse" x1="0" x2="0" y1={bounds.top} y2={bounds.bottom}>
+            <stop offset="0" className="hero-line-core" /><stop offset={gradientOffset(line.start)} className="hero-line-core" />
+            <stop offset={gradientOffset(line.start + (bounds.bottom - line.start) * 0.45)} className="hero-line-middle" />
+            <stop offset="1" className="hero-line-edge" />
+          </linearGradient>
+        ))}
+        <clipPath id={`${id}-entrance`} clipPathUnits="userSpaceOnUse">
+          <rect x="-32" y="238" width="821" height="220" />
+          {upperLines.map((line, index) => <rect key={`up-${index}`} x={line.x - 2} y={bounds.top - 2}
+            width={line.width + 4} height={Math.max(0, line.end + 4 - bounds.top)} className="hero-guide hero-guide-up" />)}
+          {lowerLines.map((line, index) => <rect key={`down-${index}`} x={line.x - 2} y={line.start - 2}
+            width={line.width + 4} height={Math.max(0, bounds.bottom - line.start + 4)} className="hero-guide hero-guide-down" />)}
+        </clipPath>
+      </defs>
+      <g className="hero-mark-letters" clipPath={`url(#${id}-entrance)`}>
+        <g mask={`url(#${id}-fill-mask)`}>
+          {extendedGlyphs.map((glyph, index) => <path key={index} d={glyph.path} transform={`translate(${glyph.offset} 0)`}
+            fill={index === 0 ? `url(#${id}-up-1)` : index === 6 ? `url(#${id}-up-0)`
+              : index === 2 ? `url(#${id}-down-1)` : index === 5 ? `url(#${id}-down-0)` : undefined} />)}
+        </g>
+        <g mask={`url(#${id}-outline-mask)`} className="hero-mark-outline" fill="none" stroke="currentColor">
+          {extendedGlyphs.map((glyph, index) => <path key={index} d={glyph.path} transform={`translate(${glyph.offset} 0)`} vectorEffect="non-scaling-stroke"
+            stroke={index === 0 ? `url(#${id}-up-1)` : index === 6 ? `url(#${id}-up-0)`
+              : index === 2 ? `url(#${id}-down-1)` : index === 5 ? `url(#${id}-down-0)` : undefined} />)}
+        </g>
       </g>
     </svg>
   );
 };
-

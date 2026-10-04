@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useReducedMotion } from 'motion/react';
 import CloudLoader from '@/components/ui/quantum-cloud-loader';
 
 interface LoadingScreenProps {
@@ -7,36 +8,37 @@ interface LoadingScreenProps {
 
 export const LoadingScreen = ({ onComplete }: LoadingScreenProps) => {
   const [isFadingOut, setIsFadingOut] = useState(false);
+  const reducedMotion = useReducedMotion();
+  const fadeDuration = reducedMotion ? 0 : 800;
 
   useEffect(() => {
-    // Quantum cloud loader active for initial loading interval
-    const spinTimer = setTimeout(() => {
-      setIsFadingOut(true);
-    }, 1800);
-
+    // Keep the original introduction visible before its gradual fade-out.
+    const spinTimer = setTimeout(() => setIsFadingOut(true), 1800);
     return () => clearTimeout(spinTimer);
   }, []);
 
   useEffect(() => {
     if (!isFadingOut) return;
 
-    // Dispatch completion and unmount exactly when 0.8s fade-out completes
     const exitTimer = setTimeout(() => {
       window.dispatchEvent(new CustomEvent('loadingComplete'));
       onComplete();
-    }, 800);
+    }, fadeDuration);
 
     return () => clearTimeout(exitTimer);
-  }, [isFadingOut, onComplete]);
+  }, [isFadingOut, onComplete, fadeDuration]);
 
   return (
     <div
+      data-loading-screen
+      role="status"
+      aria-label="Загрузка портфолио"
       className={`fixed inset-0 z-50 flex items-center justify-center bg-black ${
         isFadingOut ? 'pointer-events-none' : ''
       }`}
       style={{
         opacity: isFadingOut ? 0 : 1,
-        transition: 'opacity 0.8s ease-out',
+        transition: `opacity ${fadeDuration}ms ease-out`,
       }}
     >
       <CloudLoader />

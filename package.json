@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "security:scan": "node scripts/security-scan.mjs",
+    "security:audit": "npm audit"
   },
   "dependencies": {
     "framer-motion": "^13.4.4",
