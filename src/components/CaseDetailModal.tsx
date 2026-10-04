@@ -65,8 +65,8 @@ const CloseButton = ({ label, onClose }: { label: string; onClose: () => void })
 const ViewerImage = ({ image }: { image: CaseGalleryImage }) => {
   const [loaded, setLoaded] = useState(false);
   return <>
-    <img className="case-viewer-preview" src={image.src.replace('.png', '-preview.webp')} alt="" aria-hidden="true" style={image.crop} />
-    <img className="case-viewer-original" src={image.src.replace('.png', '-full.webp')} alt={image.alt} style={image.crop} decoding="async" data-loaded={loaded} onLoad={() => setLoaded(true)} />
+    <img className="case-viewer-preview" src={`${import.meta.env.BASE_URL}${image.src.slice(1).replace('.png', '-preview.webp')}`} alt="" aria-hidden="true" style={image.crop} />
+    <img className="case-viewer-original" src={`${import.meta.env.BASE_URL}${image.src.slice(1).replace('.png', '-full.webp')}`} alt={image.alt} style={image.crop} decoding="async" data-loaded={loaded} onLoad={() => setLoaded(true)} />
   </>;
 };
 
@@ -127,7 +127,7 @@ const CaseDialog = ({ caseItem, onClose }: { caseItem: CaseItem; onClose: () => 
       transition={{ duration: reducedMotion ? 0 : 0.18, ease: 'easeOut' }}
       style={{ aspectRatio: image.aspectRatio }} onClick={() => { if (!closing) setImageIndex(index); }}
       aria-label={`Увеличить: ${image.alt}`} data-figma-node={image.nodeId}>
-      <img src={image.src.replace('.png', '-preview.webp')} alt={image.alt} style={image.crop}
+      <img src={`${import.meta.env.BASE_URL}${image.src.slice(1).replace('.png', '-preview.webp')}`} alt={image.alt} style={image.crop}
         loading={index < 2 ? 'eager' : 'lazy'} decoding="async" />
     </motion.button>
   );

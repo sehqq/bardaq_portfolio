@@ -20,7 +20,8 @@ const contentSecurityPolicy = [
   "worker-src 'none'",
 ].join('; ')
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
+  base: mode === 'production' ? '/bardaq_portfolio/' : '/',
   plugins: [
     react(),
     tailwindcss(),
@@ -65,4 +66,4 @@ export default defineConfig({
       'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
     },
   },
-})
+}))
