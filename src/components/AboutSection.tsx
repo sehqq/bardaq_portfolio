@@ -1,14 +1,12 @@
 import { useState, useEffect } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 
-import bioPhoto1 from '../assets/images/Gemini_Generated_Image_m8nddem8nddem8nd 1.png';
-import bioPhoto2 from '../assets/images/Gemini_Generated_Image_9xgvha9xgvha9xgv 1.png';
-import bioPhoto3 from '../assets/images/уыаываываы 1.png';
+import bioStagePhoto from '../assets/images/Gemini_Generated_Image_9xgvha9xgvha9xgv 1.png';
+import bioBluePortrait from '../assets/images/bio-blue-portrait.jpg';
 
 const bioSlides = [
-  { id: 1, src: bioPhoto1, alt: 'Егор Павловский — графический и веб-дизайнер' },
-  { id: 2, src: bioPhoto2, alt: 'Процесс работы над айдентикой и визуалом' },
-  { id: 3, src: bioPhoto3, alt: 'Визуальные системы и дизайн-концепты' },
+  { id: 1, src: bioStagePhoto, alt: 'Егор Павловский на сцене в фиолетовом свете' },
+  { id: 2, src: bioBluePortrait, alt: 'Портрет Егора Павловского в синем свете' },
 ];
 
 const SLIDE_DURATION = 4500; // 4.5 seconds per slide
